@@ -61,10 +61,11 @@ function getIDUserSession($sessionName)
     $intIDUserSession = "";
     if ($sessionName != '') {
         $conn = getConexion();
-        $strQuery = "SELECT usuarios.id
+        $strQuery = "SELECT DISTINCT 
+                            usuarios.id
                        FROM usuarios 
                             INNER JOIN session_user 
-                                    ON session_user.nombre = usuarios.nombre 
+                                    ON session_user.nombre = usuarios.nickname 
                       WHERE session_user.nombre = '{$sessionName}'";
         $result = mysqli_query($conn, $strQuery);
         if (!empty($result)) {
@@ -77,36 +78,59 @@ function getIDUserSession($sessionName)
     return $intIDUserSession;
 }
 
+function getRolUserSession($sessionName)
+{
+    $strRolUserSession = "";
+    if ($sessionName != '') {
+        $conn = getConexion();
+        $strQuery = "SELECT DISTINCT tipo_usuario.nombre
+                       FROM usuarios 
+                            INNER JOIN session_user 
+                                    ON session_user.nombre = usuarios.nickname 
+                            INNER JOIN tipo_usuario 
+                                    ON usuarios.tipo = tipo_usuario.id
+                      WHERE session_user.nombre = '{$sessionName}'";
+        $result = mysqli_query($conn, $strQuery);
+        if (!empty($result)) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $strRolUserSession = $row["nombre"];
+            }
+        }
+    }
+
+    return $strRolUserSession;
+}
+
 function draMenu($strNamePage = "")
 {
     ?>
     <li class="nav-item">
         <a class="<?php print ($strNamePage == "Inicio")? "nav-link active":"nav-link"; ?>" aria-current="page" href="menu.php">
-        <span data-feather="home"></span>
+        <i class="fas fa-star"></i>
         Inicio
         </a>
     </li>
     <li class="nav-item">
         <a class="<?php print ($strNamePage == "Asignaciones")? "nav-link active":"nav-link"; ?>" href="asignaciones.php">
-        <span data-feather="file"></span>
+        <i class="fas fa-clipboard-list"></i>
         Asignaciones 
         </a>
     </li>
     <li class="nav-item">
         <a class="<?php print ($strNamePage == "Herramientas")? "nav-link active":"nav-link"; ?>" href="herramientas.php">
-        <span data-feather="shopping-cart"></span>
+        <i class="fas fa-tools"></i>
         Herramientas
         </a>
     </li>
     <li class="nav-item">
         <a class="<?php print ($strNamePage == "Talleres")? "nav-link active":"nav-link"; ?>" href="talleres.php">
-        <span data-feather="users"></span>
+        <i class="fas fa-home"></i>
         Talleres
         </a>
     </li>
     <li class="nav-item">
         <a class="<?php print ($strNamePage == "Usuarios")? "nav-link active":"nav-link"; ?>" href="usuarios.php">
-        <span data-feather="bar-chart-2"></span>
+        <i class="fas fa-users"></i>
         Usuarios
         </a>
     </li>
