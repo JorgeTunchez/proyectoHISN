@@ -300,139 +300,135 @@ class usuario_view{
                 <div class="container-fluid">
                     <div class="row">
                         <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-                        <div class="position-sticky pt-3">
-                            <ul class="nav flex-column">
-                                <?php 
-                                draMenu("Usuarios");
-                                ?>
-                            </ul>            
-                        </div>
-                        </nav>
-
-                        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8">
-                                    <h1 class="h2">Usuarios</h1>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <button class="btn btn-info" onclick="agregarUsuario()" title="Agregar"><i class="fas fa-plus"></i></button>
-                                </div>
-                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                    <button class="btn btn-success" onclick="checkForm()" title="Guardar"><i class="far fa-save"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Inicio Contenido -->
-                        <div class="table-responsive">
-                        <table class="table table-sm table-hover" id="tblUsuarios">
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>NickName</th>
-                                    <th>Password</th>
-                                    <th>Nombres</th>
-                                    <th>Apellidos</th>
-                                    <th>Taller</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php
-                                $arrTalleres = $this->objModel->getTalleres();
-                                $arrUsuarios = $this->objModel->getUsuarios();
-                                $intConteo = 0;
-                                reset($arrTalleres);
-                                while ($rTMP = each($arrUsuarios)) {
-                                    $intConteo++;
-                                    $intID = $rTMP["key"];
-                                    $strNickname = trim($rTMP["value"]["NICKNAME"]);
-                                    $strPassword = trim($rTMP["value"]["PASSWORD"]);
-                                    $strNombres = trim($rTMP["value"]["NOMBRES"]);
-                                    $strApellidos = trim($rTMP["value"]["APELLIDOS"]);
-                                    $intTaller = intval($rTMP["value"]["TALLER_ID"]);
-                                    $strTallerNombre = trim($rTMP["value"]["TALLER_NOMBRE"]);
+                            <div class="position-sticky pt-3">
+                                <ul class="nav flex-column">
+                                    <?php 
+                                    draMenu("Usuarios");
                                     ?>
-                                    <tr id="trUsuario_<?php print $intID; ?>">
-                                        <td data-title="No." style="text-align:left; vertical-align:middle;">
-                                            <h3><?php print $intConteo; ?></h3>
-                                            <input id="hdnUsuario_<?php print $intID; ?>" name="hdnUsuario_<?php print $intID; ?>" type="hidden" value="N">
-                                        </td>
-                                        <td data-title="Nickname" style="text-align:left; vertical-align:middle;">
-                                            <div id="divShowUsuarioNickname_<?php print $intID; ?>">
-                                                <?php print $strNickname; ?>
-                                            </div>
-                                            <div id="divEditUsuarioNickname_<?php print $intID; ?>" style="display:none;">
-                                                <input class="form-control" type="text" id="txtNickname_<?php print $intID; ?>" name="txtNickname_<?php print $intID; ?>" value="<?php print $strNickname; ?>">
-                                            </div>
-                                        </td>
-                                        <td data-title="Password" style="text-align:left; vertical-align:middle;">
-                                            <div id="divShowUsuarioPassword_<?php print $intID; ?>">
-                                                <?php print $strPassword; ?>
-                                            </div>
-                                            <div id="divEditUsuarioPassword_<?php print $intID; ?>" style="display:none;">
-                                                <input class="form-control" type="text" id="txtPassword_<?php print $intID; ?>" name="txtPassword_<?php print $intID; ?>" value="<?php print $strPassword; ?>">
-                                            </div>
-                                        </td>
-                                        <td data-title="Nombres" style="text-align:left; vertical-align:middle;">
-                                            <div id="divShowUsuarioNombres_<?php print $intID; ?>">
-                                                <?php print $strNombres; ?>
-                                            </div>
-                                            <div id="divEditUsuarioNombres_<?php print $intID; ?>" style="display:none;">
-                                                <input class="form-control" type="text" id="txtNombres_<?php print $intID; ?>" name="txtNombres_<?php print $intID; ?>" value="<?php print $strNombres; ?>">
-                                            </div>
-                                        </td>
-                                        <td data-title="Apellidos" style="text-align:left; vertical-align:middle;">
-                                            <div id="divShowUsuarioApellidos_<?php print $intID; ?>">
-                                                <?php print $strApellidos; ?>
-                                            </div>
-                                            <div id="divEditUsuarioApellidos_<?php print $intID; ?>" style="display:none;">
-                                                <input class="form-control" type="text" id="txtApellidos_<?php print $intID; ?>" name="txtApellidos_<?php print $intID; ?>" value="<?php print $strApellidos; ?>">
-                                            </div>
-                                        </td>
-                                        <td data-title="Taller" style="text-align:left; vertical-align:middle;">
-                                            <div id="divShowUsuarioTaller_<?php print $intID; ?>">
-                                                <?php print $strTallerNombre; ?>
-                                            </div>
-                                            <div id="divEditUsuarioTaller_<?php print $intID; ?>" style="display:none;">
-                                                <select id="selectTaller_<?php print $intID; ?>" name="selectTaller_<?php print $intID; ?>" style="text-align: center;" class="form-control">
-                                                    <?php
-                                                    reset($arrTalleres);
-                                                    while ($rTMP = each($arrTalleres)) {
-                                                        $strSelected = (($rTMP["key"] == $intTaller)) ? 'selected' : '';
-                                                        ?>
-                                                        <option value="<?php print $rTMP["key"]; ?>" <?php print $strSelected; ?>><?php print $rTMP["value"]["NOMBRE"]; ?></option>
-                                                        <?php
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </div>
-                                        </td>
-                                        
-                                        <td data-title="Acciones" style="text-align:left;">
-                                            <button class="btn btn-info btn-block" onclick="editUsuario('<?php print $intID; ?>')" title="Editar">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-danger btn-block" onclick="deleteUsuario('<?php print $intID; ?>')" title="Eliminar">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <?php
-                                }
-                                ?>
-                            </tbody>
-                        </table>
-                        </div>
-                        <!-- Fin Contenido -->
+                                </ul>            
+                            </div>
+                        </nav>
+                        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8">
+                                        <h1 class="h2">Usuarios</h1>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                        <button class="btn btn-info" onclick="agregarUsuario()" title="Agregar"><i class="fas fa-plus"></i></button>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                        <button class="btn btn-success" onclick="checkForm()" title="Guardar"><i class="far fa-save"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Inicio Contenido -->
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover" id="tblUsuarios">
+                                    <thead>
+                                        <tr>
+                                            <th>No.</th>
+                                            <th>NickName</th>
+                                            <th>Password</th>
+                                            <th>Nombres</th>
+                                            <th>Apellidos</th>
+                                            <th>Taller</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $arrTalleres = $this->objModel->getTalleres();
+                                        $arrUsuarios = $this->objModel->getUsuarios();
+                                        $intConteo = 0;
+                                        reset($arrTalleres);
+                                        while ($rTMP = each($arrUsuarios)) {
+                                            $intConteo++;
+                                            $intID = $rTMP["key"];
+                                            $strNickname = trim($rTMP["value"]["NICKNAME"]);
+                                            $strPassword = trim($rTMP["value"]["PASSWORD"]);
+                                            $strNombres = trim($rTMP["value"]["NOMBRES"]);
+                                            $strApellidos = trim($rTMP["value"]["APELLIDOS"]);
+                                            $intTaller = intval($rTMP["value"]["TALLER_ID"]);
+                                            $strTallerNombre = trim($rTMP["value"]["TALLER_NOMBRE"]);
+                                            ?>
+                                            <tr id="trUsuario_<?php print $intID; ?>">
+                                                <td data-title="No." style="text-align:left; vertical-align:middle;">
+                                                    <h3><?php print $intConteo; ?></h3>
+                                                    <input id="hdnUsuario_<?php print $intID; ?>" name="hdnUsuario_<?php print $intID; ?>" type="hidden" value="N">
+                                                </td>
+                                                <td data-title="Nickname" style="text-align:left; vertical-align:middle;">
+                                                    <div id="divShowUsuarioNickname_<?php print $intID; ?>">
+                                                        <?php print $strNickname; ?>
+                                                    </div>
+                                                    <div id="divEditUsuarioNickname_<?php print $intID; ?>" style="display:none;">
+                                                        <input class="form-control" type="text" id="txtNickname_<?php print $intID; ?>" name="txtNickname_<?php print $intID; ?>" value="<?php print $strNickname; ?>">
+                                                    </div>
+                                                </td>
+                                                <td data-title="Password" style="text-align:left; vertical-align:middle;">
+                                                    <div id="divShowUsuarioPassword_<?php print $intID; ?>">
+                                                        <?php print $strPassword; ?>
+                                                    </div>
+                                                    <div id="divEditUsuarioPassword_<?php print $intID; ?>" style="display:none;">
+                                                        <input class="form-control" type="text" id="txtPassword_<?php print $intID; ?>" name="txtPassword_<?php print $intID; ?>" value="<?php print $strPassword; ?>">
+                                                    </div>
+                                                </td>
+                                                <td data-title="Nombres" style="text-align:left; vertical-align:middle;">
+                                                    <div id="divShowUsuarioNombres_<?php print $intID; ?>">
+                                                        <?php print $strNombres; ?>
+                                                    </div>
+                                                    <div id="divEditUsuarioNombres_<?php print $intID; ?>" style="display:none;">
+                                                        <input class="form-control" type="text" id="txtNombres_<?php print $intID; ?>" name="txtNombres_<?php print $intID; ?>" value="<?php print $strNombres; ?>">
+                                                    </div>
+                                                </td>
+                                                <td data-title="Apellidos" style="text-align:left; vertical-align:middle;">
+                                                    <div id="divShowUsuarioApellidos_<?php print $intID; ?>">
+                                                        <?php print $strApellidos; ?>
+                                                    </div>
+                                                    <div id="divEditUsuarioApellidos_<?php print $intID; ?>" style="display:none;">
+                                                        <input class="form-control" type="text" id="txtApellidos_<?php print $intID; ?>" name="txtApellidos_<?php print $intID; ?>" value="<?php print $strApellidos; ?>">
+                                                    </div>
+                                                </td>
+                                                <td data-title="Taller" style="text-align:left; vertical-align:middle;">
+                                                    <div id="divShowUsuarioTaller_<?php print $intID; ?>">
+                                                        <?php print $strTallerNombre; ?>
+                                                    </div>
+                                                    <div id="divEditUsuarioTaller_<?php print $intID; ?>" style="display:none;">
+                                                        <select id="selectTaller_<?php print $intID; ?>" name="selectTaller_<?php print $intID; ?>" style="text-align: center;" class="form-control">
+                                                            <?php
+                                                            reset($arrTalleres);
+                                                            while ($rTMP = each($arrTalleres)) {
+                                                                $strSelected = (($rTMP["key"] == $intTaller)) ? 'selected' : '';
+                                                                ?>
+                                                                <option value="<?php print $rTMP["key"]; ?>" <?php print $strSelected; ?>><?php print $rTMP["value"]["NOMBRE"]; ?></option>
+                                                                <?php
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                
+                                                <td data-title="Acciones" style="text-align:left;">
+                                                    <button class="btn btn-info btn-block" onclick="editUsuario('<?php print $intID; ?>')" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-danger btn-block" onclick="deleteUsuario('<?php print $intID; ?>')" title="Eliminar">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <?php
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- Fin Contenido -->
                         </main>
                     </div>
                     </div>
-
-
-
                 <script src="js/jquery.min.js"></script>
                 <script>
                     function destroSession() {
