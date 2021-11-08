@@ -20,18 +20,21 @@ if (isset($_SESSION['user_id'])) {
 } else {
     header("Location: index.php");
 }
-$objController = new menu_controller();
+$objController = new asignaciones_controller($arrRolUser);
+$objController->process();
 $objController->runAjax();
 $objController->drawContentController();
 
-class menu_controller{
+class asignaciones_controller{
     private $objModel;
     private $objView;
+    private $arrRolUser;
 
-    public function __construct()
+    public function __construct($arrRolUser)
     {
-        $this->objModel = new menu_model();
-        $this->objView = new menu_view();
+        $this->objModel = new asignaciones_model();
+        $this->objView = new asignaciones_view($arrRolUser);
+        $this->arrRolUser = $arrRolUser;
     }
 
     public function drawContentController()
@@ -54,15 +57,165 @@ class menu_controller{
             exit();
         }
     }
+
+    public function process(){
+        $intUser = intval($this->arrRolUser["ID"]);
+        reset($_POST);
+        while ($arrTMP = each($_POST)) {
+            $arrExplode = explode("_", $arrTMP['key']);
+            if ($arrExplode[0] == "hdnItem") {
+                $intMecanico = $arrExplode[1];
+                $intConteo = $arrExplode[2];
+                $strAccion = isset($_POST["hdnItem_{$intMecanico}_{$intConteo}"]) ? trim($_POST["hdnItem_{$intMecanico}_{$intConteo}"]) : '';
+                if ($strAccion == "A") {
+                    //insertar
+                    $intHerramienta = isset($_POST["sltHerramienta_{$intMecanico}_{$intConteo}"]) ? intval($_POST["sltHerramienta_{$intMecanico}_{$intConteo}"]) : 0;
+                    $this->objModel->insertAsignacion($intMecanico, $intHerramienta, $intUser);
+                }elseif ($strAccion == "D") {
+                    //desasignar
+                    $intAsignacion = isset($_POST["hdnItemAsig_{$intMecanico}_{$intConteo}"]) ? intval($_POST["hdnItemAsig_{$intMecanico}_{$intConteo}"]) : 0;
+                    $this->objModel->desasignarHerramienta($intAsignacion);
+                }elseif ($strAccion == "O") {
+                    //obsoleto
+                    $intAsignacion = isset($_POST["hdnItemAsig_{$intMecanico}_{$intConteo}"]) ? intval($_POST["hdnItemAsig_{$intMecanico}_{$intConteo}"]) : 0;
+                    $this->objModel->obseletoHerramienta($intAsignacion);
+                }elseif ($strAccion == "R") {
+                    //reciclar
+                    $intAsignacion = isset($_POST["hdnItemAsig_{$intMecanico}_{$intConteo}"]) ? intval($_POST["hdnItemAsig_{$intMecanico}_{$intConteo}"]) : 0;
+                    $this->objModel->reciclarHerramienta($intAsignacion);
+                }
+            }
+        }
+    }
+
 }
 
-class menu_model{}
+class asignaciones_model{
 
-class menu_view{
+    public function getListado(){
+        $conn = getConexion();
+        $arrListado = array();
+        $strQuery = "SELECT asignaciones.id asignacion_id, 
+                            usuarios.id usuario_id, 
+                            usuarios.nickname usuario_nickname,
+                            herramientas.id herramienta_id,
+                            herramientas.codigo herramienta_codigo,
+                            herramientas.nombre herramienta_nombre 
+                       FROM usuarios
+                            LEFT JOIN asignaciones ON asignaciones.usuario = usuarios.id
+                            LEFT JOIN herramientas ON asignaciones.herramienta = herramientas.id 
+                      WHERE usuarios.tipo = 2
+                        AND herramientas.obseleto = 0
+                        AND herramientas.reciclado = 0
+                      ORDER BY usuarios.nickname ASC, herramienta_codigo ASC";
+        $result = mysqli_query($conn, $strQuery);
+        if (!empty($result)) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $arrListado[$row["usuario_nickname"]]["ID_MECANICO"] = $row["usuario_id"];
+                if(isset($arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"])){
+                    if( isset($row["herramienta_codigo"]) && $row["herramienta_codigo"]!='' ){
+                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"][$row["asignacion_id"]]["CODIGO"]= $row["herramienta_codigo"];
+                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"][$row["asignacion_id"]]["NOMBRE"]= $row["herramienta_nombre"];
+                    }
+                    
+                }else{
+                    if( isset($row["herramienta_codigo"]) && $row["herramienta_codigo"]!='' ){
+                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"] = array();
+                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"][$row["asignacion_id"]]["CODIGO"]= $row["herramienta_codigo"];
+                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"][$row["asignacion_id"]]["NOMBRE"]= $row["herramienta_nombre"];
+                    }
+                    
+                }
+            }
+        }
+        return $arrListado;
+    }
+
+    public function getHerramientas(){
+        $conn = getConexion();
+        $arrHerramientas = array();
+        $strQuery = "SELECT id, 
+                            codigo,
+                            nombre
+                       FROM herramientas
+                      WHERE id NOT IN (SELECT DISTINCT herramienta FROM asignaciones)
+                        AND obseleto = 0
+                        AND reciclado = 0
+                      ORDER BY nombre ASC";
+        $result = mysqli_query($conn, $strQuery);
+        if (!empty($result)) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $arrHerramientas[$row["id"]]["CODIGO"] = $row["codigo"];
+                $arrHerramientas[$row["id"]]["NOMBRE"] = $row["nombre"];
+            }
+        }
+        return $arrHerramientas;
+    }
+
+    public function insertAsignacion($intMecanico, $intHerramienta, $intUser){
+        if ( $intMecanico > 0 && $intHerramienta > 0 &&  $intUser > 0) {
+            $conn = getConexion();
+            $strQuery = "INSERT INTO asignaciones (herramienta, usuario, add_fecha, add_user) 
+                                       VALUES ( {$intHerramienta}, {$intMecanico}, now(), {$intUser})";
+            mysqli_query($conn, $strQuery);
+        }
+    }
+
+    public function desasignarHerramienta($intAsignacion){
+        if ($intAsignacion > 0) {
+            $conn = getConexion();
+            $strQuery = "DELETE FROM asignaciones WHERE id = {$intAsignacion}";
+            mysqli_query($conn, $strQuery);
+        }
+    }
+
+    public function getIdHerramientaAsig($intAsignacion){
+        if( $intAsignacion > 0 ){
+            $intIDHerramienta = 0;
+            $conn = getConexion();
+            $strQuery = "SELECT herramienta FROM asignaciones WHERE id = {$intAsignacion}";
+            $result = mysqli_query($conn, $strQuery);
+            if (!empty($result)) {
+                while ($row = mysqli_fetch_assoc($result)) {
+                    $intIDHerramienta = $row["herramienta"];
+                }
+            }
+            return $intIDHerramienta;
+        }
+    }
+
+    public function obseletoHerramienta($intAsignacion){
+        if ($intAsignacion > 0) {
+            $conn = getConexion();
+            $intIDHerramienta = $this->getIdHerramientaAsig($intAsignacion);
+            $strQuery = "UPDATE herramientas 
+                            SET obseleto = 1
+                          WHERE id = {$intIDHerramienta}";
+            mysqli_query($conn, $strQuery);
+        }
+    }
+
+    public function reciclarHerramienta($intAsignacion){
+        if ($intAsignacion > 0) {
+            $conn = getConexion();
+            $intIDHerramienta = $this->getIdHerramientaAsig($intAsignacion);
+            $strQuery = "UPDATE herramientas 
+                            SET obseleto = 1,
+                                reciclado = 1
+                          WHERE id = {$intIDHerramienta}";
+            mysqli_query($conn, $strQuery);
+        }
+    }
+
+
+
+}
+
+class asignaciones_view{
     private $objModel;
 
     public function __construct(){
-        $this->objModel = new menu_model();
+        $this->objModel = new asignaciones_model();
     }
 
     public function drawContent(){
@@ -201,18 +354,94 @@ class menu_view{
                         </nav>
                         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                            <h1 class="h2">Asignaciones</h1>
+                            <div class="row">
+                                <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8">
+                                    <h1 class="h2">Asignaciones</h1>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                    <button class="btn btn-success" onclick="checkForm()" title="Guardar"><i class="far fa-save"></i></button>
+                                </div>
+                            </div>
                         </div>
                         <!-- Inicio Contenido -->
-                        <div class="table-responsive">
-                        Asignaciones
+                        <div class="table-responsive" id="divContent">
+                            <?php 
+                            $arrListado = $this->objModel->getListado();
+                            if( count($arrListado)>0 ){
+                                ?>
+                                <div class="accordion mt-4 mb-4" id="accordionExample">
+                                    <?php
+                                    reset($arrListado);
+                                    while( $rTMP = each($arrListado) ){
+                                        
+                                        $strMecanicoNombre = $rTMP["key"];
+                                        $intIDMecanico = $rTMP["value"]["ID_MECANICO"];
+                                        ?>
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="<?php print "accordion_".$intIDMecanico; ?>">
+                                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#<?php print "collapse_".$intIDMecanico; ?>" aria-expanded="true" aria-controls="<?php print "collapse_".$intIDMecanico; ?>">
+                                                        <?php print $strMecanicoNombre; ?>
+                                                    </button>
+                                                </h2>
+                                                <div id="<?php print "collapse_".$intIDMecanico; ?>" class="accordion-collapse collapse show" aria-labelledby="<?php print "accordion_".$intIDMecanico; ?>" data-bs-parent="#accordionExample">
+                                                    <div class="accordion-body">
+                                                        <ul class="list-group" id="list_<?php print $intIDMecanico; ?>">
+                                                        <?php
+                                                        $intConteo = 0;
+                                                        while( $rTMP2 = each($rTMP["value"]["HERRAMIENTAS"]) ){
+                                                            $intConteo++;
+                                                            $intAsignacion =  $rTMP2["key"];
+                                                            $strCodigo = $rTMP2["value"]["CODIGO"];
+                                                            $strNombre = $rTMP2["value"]["NOMBRE"];
+                                                            ?>
+                                                            <li class="list-group-item" id="item_<?php print $intIDMecanico; ?>_<?php print $intConteo; ?>">
+                                                                <input type="hidden" id="hdnItem_<?php print $intIDMecanico; ?>_<?php print $intConteo; ?>" name="hdnItem_<?php print $intIDMecanico; ?>_<?php print $intConteo; ?>">
+                                                                <input type="hidden" id="hdnItemAsig_<?php print $intIDMecanico; ?>_<?php print $intConteo; ?>" name="hdnItemAsig_<?php print $intIDMecanico; ?>_<?php print $intConteo; ?>" value="<?php print $intAsignacion; ?>">
+                                                                <?php print $strCodigo." - ".$strNombre; ?>
+                                                                <button class="btn btn-danger btn-block" title="Desasignar" onclick="desasignar('<?php print $intIDMecanico; ?>', '<?php print $intConteo; ?>')">
+                                                                    <i class="fas fa-backspace"></i>
+                                                                </button>
+                                                                <button class="btn btn-warning btn-block" title="Obsoleto" onclick="obsoleto('<?php print $intIDMecanico; ?>', '<?php print $intConteo; ?>')">
+                                                                    <i class="fas fa-ban"></i>
+                                                                </button>
+                                                                <button class="btn btn-success btn-block" title="Reciclar" onclick="reciclar('<?php print $intIDMecanico; ?>', '<?php print $intConteo; ?>')">
+                                                                    <i class="fas fa-recycle"></i>
+                                                                </button>
+                                                            </li>
+                                                            <?php
+                                                        }
+                                                        ?>
+                                                        </ul>
+                                                        <button class="btn btn-primary mt-4" onclick="asignar('<?php print $intIDMecanico; ?>')">
+                                                            <i class="fas fa-check-circle"></i>
+                                                            Asignar Herramienta
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php
+                                    }
+                                    ?>
+                                </div>
+                                <br><br><br><br>
+                                <?php
+                            }else{
+                                ?>
+                                No hay asignaciones para mostrar.
+                                <?php
+                            }
+                            ?>
                         </div>
                         <!-- Fin Contenido -->
                         </main>
                     </div>
                 </div>
+                <script src="js/bootstrap.min.js"></script>
                 <script src="js/jquery.min.js"></script>
                 <script>
+
                     function destroSession() {
                         if (confirm("¿Desea salir de la aplicación?")) {
                             $.ajax({
@@ -231,6 +460,60 @@ class menu_view{
                             });
                         }
                     }
+
+                    function desasignar(idmecanico, conteo) {
+                        $("#item_" + idmecanico +"_"+conteo).css('background-color', '#F4C5C9');
+                        $("#hdnItem_" + + idmecanico +"_"+conteo).val("D");
+                    }
+
+                    function obsoleto(idmecanico, conteo) {
+                        $("#item_" + idmecanico +"_"+conteo).css('background-color', '#FDEAB2');
+                        $("#hdnItem_" + idmecanico +"_"+conteo).val("O");
+                    }
+
+                    function reciclar(idmecanico, conteo) {
+                        $("#item_" + idmecanico +"_"+conteo).css('background-color', '#AADBC4');
+                        $("#hdnItem_" + idmecanico +"_"+conteo).val("R");
+                    }
+
+                    function fntGetMaxItemList(id) {
+                        var intCount = 0;
+                        $("li[id*='item_"+id+"']").each(function() {
+                            intCount++;
+                        });
+                        return intCount;
+                    }
+
+                    function asignar(id) {
+                        max = fntGetMaxItemList(id);
+                        max = max + 1;
+                        var $ul = $("#list_"+id);
+                        var $li = $('<li class="list-group-item" id="item_'+id+'_'+max+'">'+
+                                    '<input type="hidden" id="hdnItem_'+id+'_'+max+'" name="hdnItem_'+id+'_'+max+'" value="A">'+
+                                    '<select class="form-control" id="sltHerramienta_'+id+'_'+max+'" name="sltHerramienta_'+id+'_'+max+'" style="text-align: center;"><?php $arrHerramientas = $this->objModel->getHerramientas(); reset($arrHerramientas); while ($rTMP = each($arrHerramientas)) { ?><option value="<?php print $rTMP["key"]; ?>"><?php print $rTMP["value"]["CODIGO"]." - ".$rTMP["value"]["NOMBRE"]; ?></option><?php } ?></select>'+
+                                    '</li>')
+                        $ul.append($li);
+                    }
+
+                    function checkForm() {
+                        var response = confirm("Desea confirmar los cambios?");
+                        if (response == true) {
+                            var objSerialized = $("#divContent").find("select, input").serialize();
+                            $.ajax({
+                                url: "asignaciones.php",
+                                data: objSerialized,
+                                type: "POST",
+                                beforeSend: function() {
+                                    $("#divShowLoadingGeneralBig").show();
+                                },
+                                success: function(data) {
+                                    $("#divShowLoadingGeneralBig").hide();
+                                    location.href = "asignaciones.php";
+                                }
+                            });
+                        }
+                    }
+
                 </script>
             </body>
         </html>
