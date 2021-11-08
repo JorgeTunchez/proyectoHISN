@@ -10,6 +10,7 @@ if (isset($_SESSION['user_id'])) {
     if ($strRolUserSession != '') {
         $arrRolUser["ID"] = $intIDUserSession;
         $arrRolUser["NAME"] = $_SESSION['user_id'];
+        $arrRolUser["ROL"] = $strRolUserSession;
 
         if ($strRolUserSession == "admin") {
             $arrRolUser["ADMIN"] = true;
@@ -21,18 +22,20 @@ if (isset($_SESSION['user_id'])) {
     header("Location: index.php");
 }
 
-$objController = new menu_controller();
+$objController = new menu_controller($arrRolUser);
 $objController->runAjax();
 $objController->drawContentController();
 
 class menu_controller{
     private $objModel;
     private $objView;
+    private $arrRolUser;
 
-    public function __construct()
+    public function __construct($arrRolUser)
     {
         $this->objModel = new menu_model();
-        $this->objView = new menu_view();
+        $this->objView = new menu_view($arrRolUser);
+        $this->arrRolUser = $arrRolUser;
     }
 
     public function drawContentController()
@@ -112,9 +115,11 @@ class menu_model{
 
 class menu_view{
     private $objModel;
+    private $arrRolUser;
 
-    public function __construct(){
+    public function __construct($arrRolUser){
         $this->objModel = new menu_model();
+        $this->arrRolUser = $arrRolUser;
     }
 
     public function drawContent(){
@@ -226,6 +231,7 @@ class menu_view{
                         color:#fff;
                     }
                 </style>
+                <script src="js/loader.js"></script>
             </head>
             <body>
                 <header class="navbar navbar-info sticky-top bg-info flex-md-nowrap p-0 shadow">
@@ -233,6 +239,11 @@ class menu_view{
                     <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
+                    <div class="navbar-info">
+                        <div class="nav-item text-nowrap">
+                            <h6 style="color:#fff;"><?php print "Usuario: ".$this->arrRolUser["NAME"]; ?></h6>
+                        </div>
+                    </div>
                     <div class="navbar-info">
                         <div class="nav-item text-nowrap" onclick="destroSession()" style="cursor:pointer;">
                         <a class="navbarsession px-3" href="#">Cerrar Session</a>
@@ -245,7 +256,7 @@ class menu_view{
                         <div class="position-sticky pt-3">
                             <ul class="nav flex-column">
                                 <?php 
-                                draMenu("Inicio");
+                                draMenu("Inicio", $this->arrRolUser["ROL"]);
                                 ?>
                             </ul>            
                         </div>
@@ -264,7 +275,7 @@ class menu_view{
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                        <div class="col-xs-12 col-sm-4 col-md-4 col-lg-4">
                                         <?php
                                         $arrCPEstados = $this->objModel->getCP_Estados();
                                         reset($arrCPEstados);
@@ -284,8 +295,49 @@ class menu_view{
                                         }
                                         ?>
                                         </div>
-                                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                            Aqui vamos a dibujar las graficas
+                                        <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8">
+                                            <script type="text/javascript">
+                                                google.charts.load('current', {'packages':['bar']});
+                                                google.charts.setOnLoadCallback(drawChart);
+
+                                                function drawChart() {
+                                                    var data = google.visualization.arrayToDataTable([
+                                                        ['Estado', 'Costos', 'Promedios'],
+                                                        <?php
+                                                            $arrCPEstados = $this->objModel->getCP_Estados();
+                                                            $intCountArr = count($arrCPEstados);
+                                                            $intConteo = 0;
+                                                            reset($arrCPEstados);
+                                                            while( $rTMP = each($arrCPEstados) ){
+                                                                $intConteo++;
+                                                                $strEstado = $rTMP["key"];
+                                                                $fltCosto = floatval($rTMP["value"]["COSTO"]);
+                                                                $fltPromedio = floatval($rTMP["value"]["PROMEDIO"]);
+                                                                if( $intConteo == $intCountArr){
+                                                                    ?>
+                                                                    ['<?php print $strEstado; ?>', Number.parseFloat('<?php print $fltCosto; ?>'), Number.parseFloat('<?php print $fltPromedio; ?>')]
+                                                                    <?php
+                                                                }else{
+                                                                    ?>
+                                                                    ['<?php print $strEstado; ?>', Number.parseFloat('<?php print $fltCosto; ?>'), Number.parseFloat('<?php print $fltPromedio; ?>')],
+                                                                    <?php
+                                                                }
+                                                            }
+                                                        ?>
+                                                        ]);
+
+                                                    var options = {
+                                                        chart: {
+                                                            title: 'Costos y Promedio por Estado',
+                                                            subtitle: 'Costos, Promedio',
+                                                        }
+                                                    };
+
+                                                    var chart = new google.charts.Bar(document.getElementById('columnchart_material_1'));
+                                                    chart.draw(data, google.charts.Bar.convertOptions(options));
+                                                }
+                                            </script>
+                                            <div id="columnchart_material_1" style="width: 800px; height: 500px;"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -297,7 +349,7 @@ class menu_view{
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                        <div class="col-xs-12 col-sm-4 col-md-4 col-lg-4">
                                         <?php
                                         $arrCPTipo = $this->objModel->getCP_Tipo();
                                         reset($arrCPTipo);
@@ -317,8 +369,49 @@ class menu_view{
                                         }
                                         ?>
                                         </div>
-                                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
-                                            Aqui vamos a dibujar las graficas
+                                        <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8">
+                                            <script type="text/javascript">
+                                                google.charts.load('current', {'packages':['bar']});
+                                                google.charts.setOnLoadCallback(drawChart);
+
+                                                function drawChart() {
+                                                    var data = google.visualization.arrayToDataTable([
+                                                        ['Estado', 'Costos', 'Promedios'],
+                                                        <?php
+                                                            $arrCPTipo = $this->objModel->getCP_Tipo();
+                                                            $intCountArr = count($arrCPTipo);
+                                                            $intConteo = 0;
+                                                            reset($arrCPTipo);
+                                                            while( $rTMP = each($arrCPTipo) ){
+                                                                $intConteo++;
+                                                                $strTipo = $rTMP["key"];
+                                                                $fltCosto = floatval($rTMP["value"]["COSTO"]);
+                                                                $fltPromedio = floatval($rTMP["value"]["PROMEDIO"]);
+                                                                if( $intConteo == $intCountArr){
+                                                                    ?>
+                                                                    ['<?php print $strTipo; ?>', Number.parseFloat('<?php print $fltCosto; ?>'), Number.parseFloat('<?php print $fltPromedio; ?>')]
+                                                                    <?php
+                                                                }else{
+                                                                    ?>
+                                                                    ['<?php print $strTipo; ?>', Number.parseFloat('<?php print $fltCosto; ?>'), Number.parseFloat('<?php print $fltPromedio; ?>')],
+                                                                    <?php
+                                                                }
+                                                            }
+                                                        ?>
+                                                        ]);
+
+                                                    var options = {
+                                                        chart: {
+                                                            title: 'Costos y Promedio por Tipo',
+                                                            subtitle: 'Costos, Promedio',
+                                                        }
+                                                    };
+
+                                                    var chart = new google.charts.Bar(document.getElementById('columnchart_material_2'));
+                                                    chart.draw(data, google.charts.Bar.convertOptions(options));
+                                                }
+                                            </script>
+                                            <div id="columnchart_material_2" style="width: 800px; height: 500px;"></div>
                                         </div>
                                     </div>
                                 </div>

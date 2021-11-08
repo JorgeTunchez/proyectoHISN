@@ -10,6 +10,7 @@ if (isset($_SESSION['user_id'])) {
     if ($strRolUserSession != '') {
         $arrRolUser["ID"] = $intIDUserSession;
         $arrRolUser["NAME"] = $_SESSION['user_id'];
+        $arrRolUser["ROL"] = $strRolUserSession;
 
         if ($strRolUserSession == "admin") {
             $arrRolUser["ADMIN"] = true;
@@ -32,7 +33,7 @@ class asignaciones_controller{
 
     public function __construct($arrRolUser)
     {
-        $this->objModel = new asignaciones_model();
+        $this->objModel = new asignaciones_model($arrRolUser);
         $this->objView = new asignaciones_view($arrRolUser);
         $this->arrRolUser = $arrRolUser;
     }
@@ -92,22 +93,49 @@ class asignaciones_controller{
 
 class asignaciones_model{
 
+    private $arrRolUser;
+
+    public function __construct($arrRolUser){
+        $this->arrRolUser = $arrRolUser;
+    }
+
     public function getListado(){
         $conn = getConexion();
         $arrListado = array();
-        $strQuery = "SELECT asignaciones.id asignacion_id, 
-                            usuarios.id usuario_id, 
-                            usuarios.nickname usuario_nickname,
-                            herramientas.id herramienta_id,
-                            herramientas.codigo herramienta_codigo,
-                            herramientas.nombre herramienta_nombre 
-                       FROM usuarios
-                            LEFT JOIN asignaciones ON asignaciones.usuario = usuarios.id
-                            LEFT JOIN herramientas ON asignaciones.herramienta = herramientas.id 
-                      WHERE usuarios.tipo = 2
-                        AND herramientas.obseleto = 0
-                        AND herramientas.reciclado = 0
-                      ORDER BY usuarios.nickname ASC, herramienta_codigo ASC";
+        $strNameUser = trim($this->arrRolUser["NAME"]);
+        if( $this->arrRolUser["ROL"] == "admin" ){
+            $strQuery = "SELECT asignaciones.id asignacion_id, 
+                                usuarios.id usuario_id, 
+                                usuarios.nickname usuario_nickname,
+                                herramientas.id herramienta_id,
+                                herramientas.codigo herramienta_codigo,
+                                herramientas.nombre herramienta_nombre 
+                        FROM usuarios
+                                LEFT JOIN asignaciones ON asignaciones.usuario = usuarios.id
+                                LEFT JOIN herramientas ON asignaciones.herramienta = herramientas.id 
+                        WHERE usuarios.tipo = 2
+                            AND herramientas.obseleto = 0
+                            AND herramientas.reciclado = 0
+                        ORDER BY usuarios.nickname ASC, herramienta_codigo ASC";
+        }
+
+        if( $this->arrRolUser["ROL"] == "mecanico" ){
+            $strQuery = "SELECT asignaciones.id asignacion_id, 
+                                usuarios.id usuario_id, 
+                                usuarios.nickname usuario_nickname,
+                                herramientas.id herramienta_id,
+                                herramientas.codigo herramienta_codigo,
+                                herramientas.nombre herramienta_nombre 
+                           FROM usuarios
+                                LEFT JOIN asignaciones ON asignaciones.usuario = usuarios.id
+                                LEFT JOIN herramientas ON asignaciones.herramienta = herramientas.id 
+                          WHERE usuarios.tipo = 2
+                            AND usuarios.nickname = '{$strNameUser}'
+                            AND herramientas.obseleto = 0
+                            AND herramientas.reciclado = 0
+                        ORDER BY usuarios.nickname ASC, herramienta_codigo ASC";
+        }
+        
         $result = mysqli_query($conn, $strQuery);
         if (!empty($result)) {
             while ($row = mysqli_fetch_assoc($result)) {
@@ -213,9 +241,11 @@ class asignaciones_model{
 
 class asignaciones_view{
     private $objModel;
+    private $arrRolUser;
 
-    public function __construct(){
-        $this->objModel = new asignaciones_model();
+    public function __construct($arrRolUser){
+        $this->objModel = new asignaciones_model($arrRolUser);
+        $this->arrRolUser = $arrRolUser;
     }
 
     public function drawContent(){
@@ -336,6 +366,11 @@ class asignaciones_view{
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     <div class="navbar-info">
+                        <div class="nav-item text-nowrap">
+                            <h6 style="color:#fff;"><?php print "Usuario: ".$this->arrRolUser["NAME"]; ?></h6>
+                        </div>
+                    </div>
+                    <div class="navbar-info">
                         <div class="nav-item text-nowrap" onclick="destroSession()" style="cursor:pointer;">
                         <a class="navbarsession px-3" href="#">Cerrar Session</a>
                         </div>
@@ -347,7 +382,7 @@ class asignaciones_view{
                         <div class="position-sticky pt-3">
                             <ul class="nav flex-column">
                                 <?php 
-                                draMenu("Asignaciones");
+                                draMenu("Asignaciones", $this->arrRolUser["ROL"]);
                                 ?>
                             </ul>            
                         </div>
@@ -414,10 +449,17 @@ class asignaciones_view{
                                                         }
                                                         ?>
                                                         </ul>
-                                                        <button class="btn btn-primary mt-4" onclick="asignar('<?php print $intIDMecanico; ?>')">
-                                                            <i class="fas fa-check-circle"></i>
-                                                            Asignar Herramienta
-                                                        </button>
+                                                        <?php
+                                                        if( $this->arrRolUser["ROL"] == "admin" ){
+                                                            ?>
+                                                            <button class="btn btn-primary mt-4" onclick="asignar('<?php print $intIDMecanico; ?>')">
+                                                                <i class="fas fa-check-circle"></i>
+                                                                Asignar Herramienta
+                                                            </button>
+                                                            <?php
+                                                        }
+                                                        ?>
+                                                        
                                                     </div>
                                                 </div>
                                             </div>

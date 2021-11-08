@@ -101,40 +101,57 @@ function getRolUserSession($sessionName)
     return $strRolUserSession;
 }
 
-function draMenu($strNamePage = "")
-{
-    ?>
-    <li class="nav-item">
-        <a class="<?php print ($strNamePage == "Inicio")? "nav-link active":"nav-link"; ?>" aria-current="page" href="menu.php">
-        <i class="fas fa-star"></i>
-        Inicio
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="<?php print ($strNamePage == "Asignaciones")? "nav-link active":"nav-link"; ?>" href="asignaciones.php">
-        <i class="fas fa-clipboard-list"></i>
-        Asignaciones 
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="<?php print ($strNamePage == "Herramientas")? "nav-link active":"nav-link"; ?>" href="herramientas.php">
-        <i class="fas fa-tools"></i>
-        Herramientas
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="<?php print ($strNamePage == "Talleres")? "nav-link active":"nav-link"; ?>" href="talleres.php">
-        <i class="fas fa-home"></i>
-        Talleres
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="<?php print ($strNamePage == "Usuarios")? "nav-link active":"nav-link"; ?>" href="usuarios.php">
-        <i class="fas fa-users"></i>
-        Usuarios
-        </a>
-    </li>
-    <?php
+function draMenu($strNamePage = "", $strRolUserSession){
+    if( $strRolUserSession == "admin" ){
+        ?>
+        <li class="nav-item">
+            <a class="<?php print ($strNamePage == "Inicio")? "nav-link active":"nav-link"; ?>" aria-current="page" href="menu.php">
+            <i class="fas fa-star"></i>
+            Inicio
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="<?php print ($strNamePage == "Asignaciones")? "nav-link active":"nav-link"; ?>" href="asignaciones.php">
+            <i class="fas fa-clipboard-list"></i>
+            Asignaciones 
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="<?php print ($strNamePage == "Herramientas")? "nav-link active":"nav-link"; ?>" href="herramientas.php">
+            <i class="fas fa-tools"></i>
+            Herramientas
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="<?php print ($strNamePage == "Talleres")? "nav-link active":"nav-link"; ?>" href="talleres.php">
+            <i class="fas fa-home"></i>
+            Talleres
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="<?php print ($strNamePage == "Usuarios")? "nav-link active":"nav-link"; ?>" href="usuarios.php">
+            <i class="fas fa-users"></i>
+            Usuarios
+            </a>
+        </li>
+        <?php
+    }
+    if( $strRolUserSession == "mecanico" ){
+        ?>
+        <li class="nav-item">
+            <a class="<?php print ($strNamePage == "Inicio")? "nav-link active":"nav-link"; ?>" aria-current="page" href="menu.php">
+            <i class="fas fa-star"></i>
+            Inicio
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="<?php print ($strNamePage == "Asignaciones")? "nav-link active":"nav-link"; ?>" href="asignaciones.php">
+            <i class="fas fa-clipboard-list"></i>
+            Asignaciones 
+            </a>
+        </li>
+        <?php
+    }
 }
 
 ?>

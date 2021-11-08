@@ -1,32 +1,53 @@
 <?php
 require_once("core/core.php");
-$objController = new menu_controller();
-//$objController->runAjax();
+$objController = new menu_controller($arrRolUser);
+$objController->runAjax();
 $objController->drawContentController();
 
 class menu_controller{
     private $objModel;
     private $objView;
+    private $arrRolUser;
 
-    public function __construct()
+    public function __construct($arrRolUser)
     {
         $this->objModel = new menu_model();
-        $this->objView = new menu_view();
+        $this->objView = new menu_view($arrRolUser);
+        $this->arrRolUser = $arrRolUser;
     }
 
     public function drawContentController()
     {
         $this->objView->drawContent();
     }
+
+    public function runAjax()
+    {
+        $this->ajaxDestroySession();
+    }
+
+    public function ajaxDestroySession()
+    {
+        if (isset($_POST["destroSession"])) {
+            header("Content-Type: application/json;");
+            session_destroy();
+            $arrReturn["Correcto"] = "Y";
+            print json_encode($arrReturn);
+            exit();
+        }
+    }
+
 }
 
 class menu_model{}
 
 class menu_view{
     private $objModel;
+    private $arrRolUser;
 
-    public function __construct(){
+    public function __construct($arrRolUser){
         $this->objModel = new menu_model();
+        $this->arrRolUser = $arrRolUser;
     }
 
     public function drawContent(){
@@ -148,6 +169,11 @@ class menu_view{
                     </button>
                     <div class="navbar-info">
                         <div class="nav-item text-nowrap">
+                            <h6 style="color:#fff;"><?php print "Usuario: ".$this->arrRolUser["NAME"]; ?></h6>
+                        </div>
+                    </div>
+                    <div class="navbar-info">
+                        <div class="nav-item text-nowrap">
                         <a class="navbarsession px-3" href="#">Cerrar Session</a>
                         </div>
                     </div>
@@ -158,7 +184,7 @@ class menu_view{
                         <div class="position-sticky pt-3">
                             <ul class="nav flex-column">
                                 <?php 
-                                draMenu("Inicio");
+                                draMenu("Inicio", $this->arrRolUser["ROL"]);
                                 ?>
                             </ul>            
                         </div>

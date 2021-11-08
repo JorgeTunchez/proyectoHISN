@@ -10,11 +10,12 @@ if (isset($_SESSION['user_id'])) {
     if ($strRolUserSession != '') {
         $arrRolUser["ID"] = $intIDUserSession;
         $arrRolUser["NAME"] = $_SESSION['user_id'];
+        $arrRolUser["ROL"] = $strRolUserSession;
 
         if ($strRolUserSession == "admin") {
             $arrRolUser["ADMIN"] = true;
         } elseif ($strRolUserSession == "mecanico") {
-            $arrRolUser["MECANICO"] = true;
+            header("Location: menu.php");
         }
     }
 } else {
@@ -281,6 +282,11 @@ class menu_view{
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     <div class="navbar-info">
+                        <div class="nav-item text-nowrap">
+                            <h6 style="color:#fff;"><?php print "Usuario: ".$this->arrRolUser["NAME"]; ?></h6>
+                        </div>
+                    </div>
+                    <div class="navbar-info">
                         <div class="nav-item text-nowrap" onclick="destroSession()" style="cursor:pointer;">
                         <a class="navbarsession px-3" href="#">Cerrar Session</a>
                         </div>
@@ -292,7 +298,7 @@ class menu_view{
                         <div class="position-sticky pt-3">
                             <ul class="nav flex-column">
                                 <?php 
-                                draMenu("Herramientas");
+                                draMenu("Herramientas", $this->arrRolUser["ROL"]);
                                 ?>
                             </ul>            
                         </div>
