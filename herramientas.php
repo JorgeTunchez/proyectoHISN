@@ -110,7 +110,7 @@ class menu_model{
                 $arrHerramientas[$row["id"]]["MEDIDA"] = $row["medida"];
                 $arrHerramientas[$row["id"]]["PRECIO_COMPRA"] = $row["precio_compra"];
                 $arrHerramientas[$row["id"]]["ESTADO"] = $row["estado"];
-                $arrHerramientas[$row["id"]]["OBSOLETO"] = $row["obsoleto"];
+                $arrHerramientas[$row["id"]]["OBSOLETO"] = $row["obseleto"];
                 $arrHerramientas[$row["id"]]["RECICLADO"] = $row["reciclado"];
             }
         }
