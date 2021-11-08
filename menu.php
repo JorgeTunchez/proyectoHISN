@@ -57,7 +57,58 @@ class menu_controller{
     }
 }
 
-class menu_model{}
+class menu_model{
+
+    public function getCP_Estados(){
+        $conn = getConexion();
+        $arrCPEstados = array();
+        $strQuery = "SELECT CASE 
+                            WHEN estado = 'E' THEN 'Excelente'
+                            WHEN estado = 'M' THEN 'Malo'
+                            WHEN estado = 'R' THEN 'Regular'
+                            ELSE 'Bueno'
+                        END AS estado,
+                        ROUND(SUM(precio_compra), 2) costo, 
+                        ROUND(AVG(precio_compra), 2) promedio
+                    FROM herramientas
+                    GROUP BY estado
+                    ORDER BY costo DESC";
+        $result = mysqli_query($conn, $strQuery);
+        if (!empty($result)) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $arrCPEstados[$row["estado"]]["COSTO"] = $row["costo"];
+                $arrCPEstados[$row["estado"]]["PROMEDIO"] = $row["promedio"];
+            }
+        }
+        return $arrCPEstados;
+    }
+
+    public function getCP_Tipo(){
+        $conn = getConexion();
+        $arrCPTipo = array();
+        $strQuery = "SELECT 'Obsoleto' tipo,
+		                    ROUND(SUM(precio_compra), 2) costo, 
+                            ROUND(AVG(precio_compra), 2) promedio
+                       FROM herramientas
+                      WHERE obseleto = 1
+                      UNION
+                     SELECT 'Reciclado' tipo,
+                            ROUND(SUM(precio_compra), 2) costo, 
+                            ROUND(AVG(precio_compra), 2) promedio
+                       FROM herramientas
+                      WHERE reciclado = 1
+                      ORDER BY costo DESC";
+        $result = mysqli_query($conn, $strQuery);
+        if (!empty($result)) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $arrCPTipo[$row["tipo"]]["COSTO"] = $row["costo"];
+                $arrCPTipo[$row["tipo"]]["PROMEDIO"] = $row["promedio"];
+            }
+        }
+        return $arrCPTipo;
+    }
+
+}
 
 class menu_view{
     private $objModel;
@@ -205,8 +256,74 @@ class menu_view{
                             <h1 class="h2">Estadisticas</h1>
                         </div>
                         <!-- Inicio Contenido -->
-                        <div class="table-responsive">
-                        Inicio
+                        <div class="table">
+                            <div class="card">
+                                <div class="card-header text-white bg-primary">
+                                    <h5 class="card-title">Costos y Promedio por Estado</h5>
+                                    <h6 class="card-subtitle mb-2">Costos y promedios catalogados por estado de las herramientas</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                        <?php
+                                        $arrCPEstados = $this->objModel->getCP_Estados();
+                                        reset($arrCPEstados);
+                                        while( $rTMP = each($arrCPEstados) ){
+                                            $strEstado = $rTMP["key"];
+                                            $fltCosto = $rTMP["value"]["COSTO"];
+                                            $fltPromedio = $rTMP["value"]["PROMEDIO"];
+                                            ?>
+                                            <ul>
+                                                <li><strong><?php print $strEstado; ?></strong></li>
+                                                <ul>
+                                                    <li><?php print "Costo Total <h6>Q. ".$fltCosto."</h6>"; ?></li>
+                                                    <li><?php print "Promedio <h6>Q. ".$fltPromedio."</h6>"; ?></li>
+                                                </ul>
+                                            </ul>
+                                        <?php
+                                        }
+                                        ?>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                            Aqui vamos a dibujar las graficas
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header text-white bg-primary">
+                                    <h5 class="card-title">Costos y Promedio por Tipo</h5>
+                                    <h6 class="card-subtitle mb-2">Costos y promedios catalogados por estado de las herramientas</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                        <?php
+                                        $arrCPTipo = $this->objModel->getCP_Tipo();
+                                        reset($arrCPTipo);
+                                        while( $rTMP = each($arrCPTipo) ){
+                                            $strTipo = $rTMP["key"];
+                                            $fltCosto = $rTMP["value"]["COSTO"];
+                                            $fltPromedio = $rTMP["value"]["PROMEDIO"];
+                                            ?>
+                                            <ul>
+                                                <li><strong><?php print $strTipo; ?></strong></li>
+                                                <ul>
+                                                    <li><?php print "Costo Total <h6>Q. ".$fltCosto."</h6>"; ?></li>
+                                                    <li><?php print "Promedio <h6>Q. ".$fltPromedio."</h6>"; ?></li>
+                                                </ul>
+                                            </ul>
+                                        <?php
+                                        }
+                                        ?>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+                                            Aqui vamos a dibujar las graficas
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br><br><br><br>
                         </div>
                         <!-- Fin Contenido -->
                         </main>
