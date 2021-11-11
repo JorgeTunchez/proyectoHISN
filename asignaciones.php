@@ -99,61 +99,61 @@ class asignaciones_model{
         $this->arrRolUser = $arrRolUser;
     }
 
+    public function getHerramientasUser($strNameUser){
+        $conn = getConexion();
+        $arrListado = array();
+        if( $strNameUser !='' ){
+            $strQuery = "SELECT asignaciones.id asignacion_id, 
+                                herramientas.id herramienta_id,
+                                herramientas.codigo herramienta_codigo,
+                                herramientas.nombre herramienta_nombre 
+                           FROM usuarios
+                                INNER JOIN asignaciones ON asignaciones.usuario = usuarios.id
+                                INNER JOIN herramientas ON asignaciones.herramienta = herramientas.id 
+                          WHERE usuarios.nickname = '{$strNameUser}'
+                            AND herramientas.obseleto = 0
+                            AND herramientas.reciclado = 0
+                       ORDER BY herramienta_codigo ASC";
+            $result = mysqli_query($conn, $strQuery);
+            if (!empty($result)) {
+                while ($row = mysqli_fetch_assoc($result)) {
+                    
+                    $arrListado[$row["asignacion_id"]]["CODIGO"]= $row["herramienta_codigo"];
+                    $arrListado[$row["asignacion_id"]]["NOMBRE"]= $row["herramienta_nombre"];
+                    
+                }
+            }
+            return $arrListado;
+        }
+        
+    }
+
     public function getListado(){
         $conn = getConexion();
         $arrListado = array();
         $strNameUser = trim($this->arrRolUser["NAME"]);
         if( $this->arrRolUser["ROL"] == "admin" ){
-            $strQuery = "SELECT asignaciones.id asignacion_id, 
-                                usuarios.id usuario_id, 
-                                usuarios.nickname usuario_nickname,
-                                herramientas.id herramienta_id,
-                                herramientas.codigo herramienta_codigo,
-                                herramientas.nombre herramienta_nombre 
-                        FROM usuarios
-                                LEFT JOIN asignaciones ON asignaciones.usuario = usuarios.id
-                                LEFT JOIN herramientas ON asignaciones.herramienta = herramientas.id 
-                        WHERE usuarios.tipo = 2
-                            AND herramientas.obseleto = 0
-                            AND herramientas.reciclado = 0
-                        ORDER BY usuarios.nickname ASC, herramienta_codigo ASC";
+            $strQuery = "SELECT usuarios.id usuario_id, 
+                                usuarios.nickname usuario_nickname
+                           FROM usuarios
+                          WHERE usuarios.tipo = 2
+                       ORDER BY usuarios.nickname ASC";
         }
 
         if( $this->arrRolUser["ROL"] == "mecanico" ){
-            $strQuery = "SELECT asignaciones.id asignacion_id, 
-                                usuarios.id usuario_id, 
-                                usuarios.nickname usuario_nickname,
-                                herramientas.id herramienta_id,
-                                herramientas.codigo herramienta_codigo,
-                                herramientas.nombre herramienta_nombre 
+            $strQuery = "SELECT usuarios.id usuario_id, 
+                                usuarios.nickname usuario_nickname
                            FROM usuarios
-                                LEFT JOIN asignaciones ON asignaciones.usuario = usuarios.id
-                                LEFT JOIN herramientas ON asignaciones.herramienta = herramientas.id 
                           WHERE usuarios.tipo = 2
                             AND usuarios.nickname = '{$strNameUser}'
-                            AND herramientas.obseleto = 0
-                            AND herramientas.reciclado = 0
-                        ORDER BY usuarios.nickname ASC, herramienta_codigo ASC";
+                       ORDER BY usuarios.nickname ASC";
         }
         
         $result = mysqli_query($conn, $strQuery);
         if (!empty($result)) {
             while ($row = mysqli_fetch_assoc($result)) {
                 $arrListado[$row["usuario_nickname"]]["ID_MECANICO"] = $row["usuario_id"];
-                if(isset($arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"])){
-                    if( isset($row["herramienta_codigo"]) && $row["herramienta_codigo"]!='' ){
-                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"][$row["asignacion_id"]]["CODIGO"]= $row["herramienta_codigo"];
-                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"][$row["asignacion_id"]]["NOMBRE"]= $row["herramienta_nombre"];
-                    }
-                    
-                }else{
-                    if( isset($row["herramienta_codigo"]) && $row["herramienta_codigo"]!='' ){
-                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"] = array();
-                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"][$row["asignacion_id"]]["CODIGO"]= $row["herramienta_codigo"];
-                        $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"][$row["asignacion_id"]]["NOMBRE"]= $row["herramienta_nombre"];
-                    }
-                    
-                }
+                $arrListado[$row["usuario_nickname"]]["HERRAMIENTAS"] = $this->getHerramientasUser($row["usuario_nickname"]);
             }
         }
         return $arrListado;
